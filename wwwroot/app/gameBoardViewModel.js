@@ -11,7 +11,9 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         gameState = ko.observable('Initializing'),
         showGridLines = ko.observable(true),
         isPlaying = ko.observable(false),
-        isPaused = ko.observable(true),
+        isPaused = ko.computed(function () {
+            return !isPlaying();
+        }),
         turnCounter = 0,
         gameTimer,
         gameCells,
@@ -161,7 +163,6 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         turnCounter = 0;
         gameCells = GameApp.cellHelper.getGameCells(selectionCells);
         gameHeartbeat();
-        isPaused(false);
         isPlaying(true);
         saveMessage("Pause the game to enable Save &amp; Load");
         gameTimer = setInterval(gameHeartbeat, 100);
@@ -171,7 +172,6 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
     function stopGamePlay() {
         window.clearInterval(gameTimer);
         gameTimer = null;
-        isPaused(true);
         isPlaying(false);
         saveMessage("To save the game state, press the Save button");
     }
@@ -179,7 +179,6 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
     // allow the user to pause the game
     function pauseGame() {
         stopGamePlay();
-        isPaused(true);
         isPlaying(false);
         gameState("Paused on turn " + turnCounter);
         saveMessage("To save the game state, press the Save button");
@@ -188,7 +187,6 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
     // allow the user to resume the game
     function resumeGame() {
         gameHeartbeat();
-        isPaused(false);
         isPlaying(true);
         saveMessage("Pause the game to enable Save &amp; Load");
         gameTimer = setInterval(gameHeartbeat, 100);
