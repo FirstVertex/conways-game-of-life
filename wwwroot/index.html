@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conway's Game of Life</title>
+    <link href="theme/app.css" rel="stylesheet" />
+    <script src="lib/jquery-2.0.3.min.js"></script>
+    <script src="lib/knockout-3.0.0.js"></script>
+    <script src="lib/lodash.min.js"></script>
+
+    <script>
+        window.GameApp = {};
+    </script>
+    <script src="app/cellHelper.js"></script>
+    <script src="app/selectCellViewModel.js"></script>
+    <script src="app/cellViewModel.js"></script>
+    <script src="app/gameBoardViewModel.js"></script>
+</head>
+<body>
+    <div data-bind="visible:isSelectionMode">
+        <div class="selectionGrid" data-bind="foreach: selectionCells">
+            <div class="selectionRow" data-bind="foreach: $data">
+                <a class="selectionCell" data-bind="css:{selectedCell:isSelected}, click:toggle"></a>
+            </div>
+        </div>
+        <div class="content">
+            <h3>Initialize the game board</h3>
+            <p>
+                Click to color the boxes to set the initial game state.
+                When everything's set, press the Play button to begin.
+            </p>
+            <button data-bind="click:toggleMode">Play</button>
+        </div>
+    </div>
+    <div data-bind="visible:isPlayMode">
+        <canvas width="900" height="900" id="gameCanvas"></canvas>
+        <div class="content">
+            <h3 data-bind="text: gameState"></h3>
+            <p>
+                <input type="checkbox" data-bind="checked:showGridLines" /> Show grid lines
+                <small>Uncheck to increase performance</small>
+            </p>
+            <p>
+                <button data-bind="visible: isPlaying, click:pauseGame">Pause</button>
+                <button data-bind="visible: isPaused, click:resumeGame">Play</button>
+            </p>
+            <p style="margin-top:4em">
+                <div data-bind="html:saveMessage"></div>
+                <button data-bind="enable: isPaused, click:saveGame">Save</button>
+                <button data-bind="enable: canLoad() && isPaused(), click:loadGame">Load</button>
+            </p>
+            <button style="margin-top:4em" data-bind="click:toggleMode">Start Over</button>
+        </div>
+    </div>
+    <small class="annotation">Written by <a href="http://www.hughanderson.com">Hugh Anderson</a></small>
+</body>
+</html>
