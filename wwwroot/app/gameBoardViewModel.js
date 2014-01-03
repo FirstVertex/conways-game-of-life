@@ -35,11 +35,8 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             context.moveTo(xCoord, 0);
             context.lineTo(xCoord, canvasSize);
             context.stroke();
-        }
-        for (var i = 1; i <= numSquares; i++) {
-            var yCoord = i * cellSize;
-            context.moveTo(0, yCoord);
-            context.lineTo(canvasSize, yCoord);
+            context.moveTo(0, xCoord);
+            context.lineTo(canvasSize, xCoord);
             context.stroke();
         }
         context.closePath();
@@ -72,7 +69,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
 
         // compute the max/min coords and get an absolute size that's square
         var gameSize = GameApp.cellHelper.measureCells(gameCells);
-        var gameWH = Math.max(gameSize.width, gameSize.height);
+        var gameWH = Math.max(10, Math.max(gameSize.width, gameSize.height));
         // draw grid
         if (showGridLines()) {
             drawGrid(gameWH);
