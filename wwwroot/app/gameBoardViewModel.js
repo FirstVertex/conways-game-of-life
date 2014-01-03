@@ -130,7 +130,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             // find any new cells that will come to life.  they would have to be a neighbor of the known cells
             for (var i = cell.x - 1; i <= cell.x + 1; i++) {
                 for (var j = cell.y - 1; j <= cell.y + 1; j++) {
-                    if ((i != cell.x && j != cell.y)    // make sure it's not the current cell
+                    if (!((i === cell.x) && (j === cell.y))    // make sure it's not the current cell
                         && !_.any(neighbors, function (neighbor) {  // make sure it's not one of the currently living neighbors
                             return (neighbor.x === i && neighbor.y == j)
                         })
