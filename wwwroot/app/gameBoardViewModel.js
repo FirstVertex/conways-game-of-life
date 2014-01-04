@@ -15,7 +15,6 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             return !isPlaying();
         }),
         turnCounter = 0,
-        gameTimer,
         gameCells,
         canvasSize = 900,
         canvas,
@@ -122,53 +121,48 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             });
         }
 
-        var newCells = [];
+        var deadNeighbors = [];
         _.each(gameCells, function (cell) {
             // look at all living cells to compute if they will live to the next round
             var neighbors = cell.gameTurn(gameCells);
-
-            // find any new cells that will come to life.  they would have to be a neighbor of the known cells
-            for (var i = cell.x - 1; i <= cell.x + 1; i++) {
-                for (var j = cell.y - 1; j <= cell.y + 1; j++) {
-                    if (!((i === cell.x) && (j === cell.y))    // make sure it's not the current cell
-                        && !_.any(neighbors, function (neighbor) {  // make sure it's not one of the currently living neighbors
-                            return (neighbor.x === i && neighbor.y == j)
-                        })
-                        && !hasCellBeenChecked(i, j)) { // make sure it hasn't already been considered
-                        // note that this potential new cell has been checked to avoid re-running the neighbor counting algorithm
-                        checkedCells.push({ x: i, y: j });
-                        if (GameApp.cellHelper.countNeighbors(i, j, gameCells) === 3) { // this empty cell has 3 living neighbors
-                            newCells.push(GameApp.cellViewModel(i, j));
-                        }
-                    }
-                }
-            }
-        });
+            deadNeighbors = deadNeighbors.concat(neighbors.deadNeighbors);
+        });        
 
         // transition to the next state
         gameCells = _.filter(gameCells, function (cell) {
             return cell.transitionToNextState();
         });
+
+        neighborGroups = _.groupBy(deadNeighbors, function (neighbor) {
+            return "x:" + neighbor.x + ",y:" + neighbor.y;
+        });
         // include newborn cells
-        gameCells = gameCells.concat(newCells);
+        _.forOwn(neighborGroups, function (value, key) {
+            if (value.length === 3) {
+                gameCells.push(GameApp.cellViewModel(value[0].x, value[0].y));
+            }
+        });
 
         turnCounter++;
+    }
+
+    function animloop() {
+        if (!isPlaying()) return;
+        requestAnimationFrame(animloop);
+        gameHeartbeat();
     }
     
     // begin playing the game
     function startGamePlay() {
         turnCounter = 0;
         gameCells = GameApp.cellHelper.getGameCells(selectionCells);
-        gameHeartbeat();
         isPlaying(true);
         saveMessage("Pause the game to enable Save &amp; Load");
-        gameTimer = setInterval(gameHeartbeat, 100);
+        animloop();
     }
 
     // stop playing the game
     function stopGamePlay() {
-        window.clearInterval(gameTimer);
-        gameTimer = null;
         isPlaying(false);
         saveMessage("To save the game state, press the Save button");
     }
@@ -183,10 +177,9 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
 
     // allow the user to resume the game
     function resumeGame() {
-        gameHeartbeat();
         isPlaying(true);
         saveMessage("Pause the game to enable Save &amp; Load");
-        gameTimer = setInterval(gameHeartbeat, 100);
+        animloop();
     }
 
     // generate a DTO for saving the game state

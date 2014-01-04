@@ -5,7 +5,7 @@ GameApp.cellViewModel = function (x, y) {
     
     function gameTurn(allCells) {
         var cellNeighbors = GameApp.cellHelper.getNeighbors(self, allCells);
-        var numNeighbors = cellNeighbors.length;
+        var numNeighbors = cellNeighbors.livingNeighbors.length;
         if (numNeighbors === 3 || numNeighbors === 2) {
             nextState = true;
         } else {
