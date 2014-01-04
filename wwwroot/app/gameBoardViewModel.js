@@ -114,19 +114,44 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         }
 
         // enforce game rules
-        var checkedCells = [];
-        function hasCellBeenChecked(cellX, cellY) {
-            return _.any(checkedCells, function (cell) {
-                return cell.x === cellX && cell.y === cellY;
-            });
+        var cellTurnArray = [];
+        function addToCellTurnArray(cell) {
+            if (!cellTurnArray[cell.x]) {
+                cellTurnArray[cell.x] = [];
+            }
+            cellTurnArray[cell.x][cell.y] = cell;
         }
-
+        function getNeighborsFromCellTurnArray(cell) {
+            var result = {
+                live: [],
+                dead: []
+            };
+            for (var i = cell.x - 1; i <= cell.x + 1; i++) {
+                for (var j = cell.y - 1; j <= cell.y + 1; j++) {
+                    if (!cell.equals(i, j)) {
+                        if (cellTurnArray[i] && cellTurnArray[i][j]) {
+                            result.live.push(cellTurnArray[i][j]);
+                        }
+                        else {
+                            result.dead.push({
+                                x: i,
+                                y: j
+                            });
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        _.each(gameCells, function (cell) {
+            addToCellTurnArray(cell);
+        });
         var deadNeighbors = [];
         _.each(gameCells, function (cell) {
-            // look at all living cells to compute if they will live to the next round
-            var neighbors = cell.gameTurn(gameCells);
-            deadNeighbors = deadNeighbors.concat(neighbors.deadNeighbors);
-        });        
+            var neighbors = getNeighborsFromCellTurnArray(cell);
+            deadNeighbors = deadNeighbors.concat(neighbors.dead);
+            cell.gameTurn(neighbors);
+        });
 
         // transition to the next state
         gameCells = _.filter(gameCells, function (cell) {

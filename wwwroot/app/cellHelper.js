@@ -1,41 +1,5 @@
 ﻿// a helper class to work with groups of cells
 GameApp.cellHelper = {
-    countNeighbors: function (cellX, cellY, group) {
-        return _.reduce(group, function (sum, item) {
-            var xDiff = item.x - cellX,
-                yDiff = item.y - cellY;
-            if (xDiff === 0 && yDiff === 0) return sum;
-            return sum + ((Math.abs(xDiff) <= 1 && Math.abs(yDiff) <= 1) ? 1 : 0);
-        }, 0);
-    },
-    getNeighbors: function (cell, group) {
-        var livingNeighbors = 
-            _.reduce(group, function (sum, item) {
-                var xDiff = item.x - cell.x,
-                    yDiff = item.y - cell.y;
-                if ((xDiff != 0 || yDiff != 0) && (Math.abs(xDiff) <= 1 && Math.abs(yDiff) <= 1)) {
-                    sum.push(item);
-                }
-                return sum;
-            }, []);
-        var deadNeighbors = [];
-        for (var i = cell.x-1; i <= cell.x+1; i++) {
-            for (var j = cell.y-1; j <= cell.y+1; j++) {
-                if (!((i === cell.x) && (j === cell.y)) && (!_.any(livingNeighbors, function (neighbor) {
-                    return neighbor.x === i && neighbor.y === j;
-                }))) {
-                    deadNeighbors.push({
-                        x: i,
-                        y: j
-                    });
-                }
-            }
-        }
-        return {
-            livingNeighbors: livingNeighbors,
-            deadNeighbors: deadNeighbors
-        };
-    },
     getGameCells: function (selectionCells) {
         var selectedCells = [];
         _.each(selectionCells, function (selectionRow) {

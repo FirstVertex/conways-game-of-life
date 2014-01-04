@@ -3,9 +3,8 @@ GameApp.cellViewModel = function (x, y) {
     var currentState = true;
     var nextState = false;
     
-    function gameTurn(allCells) {
-        var cellNeighbors = GameApp.cellHelper.getNeighbors(self, allCells);
-        var numNeighbors = cellNeighbors.livingNeighbors.length;
+    function gameTurn(cellNeighbors) {
+        var numNeighbors = cellNeighbors.live.length;
         if (numNeighbors === 3 || numNeighbors === 2) {
             nextState = true;
         } else {
@@ -18,13 +17,16 @@ GameApp.cellViewModel = function (x, y) {
         nextState = false;
         return currentState;
     }
+    function equals(coordX, coordY) {
+        return (coordX === x) && (coordY === y);
+    }
 
-    var self = {
+    return {
         x: x,
         y: y,
         currentState: currentState,
         transitionToNextState: transitionToNextState,
-        gameTurn: gameTurn
-    }
-    return self;
+        gameTurn: gameTurn,
+        equals: equals
+    };
 }
