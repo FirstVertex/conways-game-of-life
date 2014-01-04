@@ -15,7 +15,8 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             return !isPlaying();
         }),
         turnCounter = 0,
-        gameCells,
+        gameGrid,
+        gameCells = GameApp.sparse2dArray(),
         canvasSize = 900,
         canvas,
         context,
@@ -67,7 +68,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         // compute the max/min coords and get an absolute size that's square
-        var gameSize = GameApp.cellHelper.measureCells(gameCells);
+        var gameSize = gameCells.measure();
         var gameWH = Math.max(10, Math.max(gameSize.width, gameSize.height));
         // draw grid
         if (showGridLines()) {
@@ -86,8 +87,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
             cellOffset.y = Math.floor((gameWH - gameSize.height) / 2)
         }
 
-        // color selected cells
-        _.each(gameCells, function (cell) {
+        gameCells.perItem(function (cell) {
             var rect = getCellCoordinates(cell, gameWH, gameSize, cellOffset);
             // default of black is fine so no need to set the fill brush
             context.fillRect(rect.x, rect.y, rect.width, rect.height);
@@ -107,55 +107,25 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         
         drawGameBoard();
 
-        if (gameCells.length === 0) {
+        if (gameCells.isEmpty()) {
             gameState("Game completed with no survivors after " + turnCounter + " turn" + (turnCounter === 1 ? "." : "s."));
             stopGamePlay();
             return;
         }
 
         // enforce game rules
-        var cellTurnArray = [];
-        function addToCellTurnArray(cell) {
-            if (!cellTurnArray[cell.x]) {
-                cellTurnArray[cell.x] = [];
-            }
-            cellTurnArray[cell.x][cell.y] = cell;
-        }
-        function getNeighborsFromCellTurnArray(cell) {
-            var result = {
-                live: [],
-                dead: []
-            };
-            for (var i = cell.x - 1; i <= cell.x + 1; i++) {
-                for (var j = cell.y - 1; j <= cell.y + 1; j++) {
-                    if (!cell.equals(i, j)) {
-                        if (cellTurnArray[i] && cellTurnArray[i][j]) {
-                            result.live.push(cellTurnArray[i][j]);
-                        }
-                        else {
-                            result.dead.push({
-                                x: i,
-                                y: j
-                            });
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-        _.each(gameCells, function (cell) {
-            addToCellTurnArray(cell);
-        });
-        var deadNeighbors = [];
-        _.each(gameCells, function (cell) {
-            var neighbors = getNeighborsFromCellTurnArray(cell);
-            deadNeighbors = deadNeighbors.concat(neighbors.dead);
-            cell.gameTurn(neighbors);
-        });
 
-        // transition to the next state
-        gameCells = _.filter(gameCells, function (cell) {
-            return cell.transitionToNextState();
+        var deadNeighbors = [];
+        var dyingNow = [];
+        gameCells.perItem(function (cell) {
+            var neighbors = gameCells.getItemNeighbors(cell.x, cell.y);
+            deadNeighbors = deadNeighbors.concat(neighbors.dontExist);
+            if (!cell.gameTurn(Object.keys(neighbors.exist).length)) {
+                dyingNow.push(cell);
+            }
+        });
+        _.each(dyingNow, function (cell) {
+            gameCells.removeItem(cell.x, cell.y);
         });
 
         neighborGroups = _.groupBy(deadNeighbors, function (neighbor) {
@@ -164,7 +134,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         // include newborn cells
         _.forOwn(neighborGroups, function (value, key) {
             if (value.length === 3) {
-                gameCells.push(GameApp.cellViewModel(value[0].x, value[0].y));
+                gameCells.addItem(GameApp.cellViewModel(value[0].x, value[0].y), value[0].x, value[0].y);
             }
         });
 
@@ -176,11 +146,30 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         requestAnimationFrame(animloop);
         gameHeartbeat();
     }
+
+    function projectSelectionToGameplay() {
+        var selectedCells = [];
+        _.each(selectionCells, function (selectionRow) {
+            selectedCells = selectedCells.concat(_.filter(selectionRow, function (cell) {
+                return cell.isSelected();
+            }));
+        });
+
+        return _.map(selectedCells, function (cell) {
+            return GameApp.cellViewModel(cell.x, cell.y);
+        });
+    }
     
     // begin playing the game
     function startGamePlay() {
         turnCounter = 0;
-        gameCells = GameApp.cellHelper.getGameCells(selectionCells);
+
+        gameCells.reset();
+        var cells = projectSelectionToGameplay();
+        _.each(cells, function (cell) {
+            gameCells.addItem(cell, cell.x, cell.y);
+        });
+
         isPlaying(true);
         saveMessage("Pause the game to enable Save &amp; Load");
         animloop();
@@ -212,7 +201,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         return {
             showGridLines: showGridLines(),
             turnCounter: turnCounter,
-            gameCells: gameCells
+            gameCells: gameCells.flatten()
         };
     }
 
@@ -220,8 +209,9 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
     function loadDTO(dto) {
         showGridLines(dto.showGridLines);
         turnCounter = dto.turnCounter;
-        gameCells = _.map(dto.gameCells, function (cell) {
-            return GameApp.cellViewModel(cell.x, cell.y);
+        gameCells.reset();
+        _.each(dto.gameCells, function (cell) {
+            gameCells.addItem(cell, cell.x, cell.y);
         });
     }
 
