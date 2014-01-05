@@ -35,7 +35,6 @@ GameApp.sparse2dArray = function () {
     }
 
     function getItemNeighbors(x, y) {
-
         var result = {
             exist: [],
             dontExist: []
@@ -59,7 +58,11 @@ GameApp.sparse2dArray = function () {
         return result;
     }
 
+    var _cachedFlat;
     function flatten() {
+        if (_cachedFlat) {
+            return _cachedFlat;
+        }
         var result = [];
 
         // have to be careful with each because of the possibility of a negative index
@@ -78,8 +81,12 @@ GameApp.sparse2dArray = function () {
                 });
             }
         });
-
+        _cachedFlat = result;
         return result;
+    }
+
+    function resetCache() {
+        _cachedFlat = null;
     }
 
     function measure () {
@@ -133,6 +140,7 @@ GameApp.sparse2dArray = function () {
         measure: measure,
         reset: reset,
         perItem: perItem,
-        isEmpty: isEmpty
+        isEmpty: isEmpty,
+        resetCache: resetCache
     };
 }

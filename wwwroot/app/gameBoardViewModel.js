@@ -137,7 +137,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
                 gameCells.addItem(GameApp.cellViewModel(value[0].x, value[0].y), value[0].x, value[0].y);
             }
         });
-
+        gameCells.resetCache();
         turnCounter++;
     }
 
