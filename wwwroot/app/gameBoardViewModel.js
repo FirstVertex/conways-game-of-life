@@ -211,7 +211,7 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         turnCounter = dto.turnCounter;
         gameCells.reset();
         _.each(dto.gameCells, function (cell) {
-            gameCells.addItem(cell, cell.x, cell.y);
+            gameCells.addItem(GameApp.cellViewModel(cell.x, cell.y), cell.x, cell.y);
         });
     }
 
