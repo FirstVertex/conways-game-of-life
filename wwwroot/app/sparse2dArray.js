@@ -118,7 +118,7 @@ GameApp.sparse2dArray = function () {
     }
 
     function reset() {
-        items = [];
+        items = {};
     }
 
     function perItem(callback) {
