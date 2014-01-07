@@ -62,33 +62,49 @@ GameApp.gameBoardViewModelFactory = function (rows, cols) {
         };
     }
 
+    var _gameSize;
+    // only re-evaluate viewport size every this many iterations
+    var sizeGranularity = 40;
+    // compute the max/min coords and get an absolute size that's square
+    function getGameSize() {
+        if (!_gameSize || (turnCounter % sizeGranularity === 0)) {
+            var gameSize = gameCells.measure();
+            var gameWH = Math.max(gameSize.width, gameSize.height) + sizeGranularity;
+            // center the display with this offset
+            var cellOffset = {
+                x: 0,
+                y: 0
+            };
+            if (gameSize.width != gameWH) {
+                cellOffset.x = Math.floor((gameWH - gameSize.width) / 2)
+            }
+            if (gameSize.height != gameWH) {
+                cellOffset.y = Math.floor((gameWH - gameSize.height) / 2)
+            }
+
+            _gameSize = {
+                gameSize: gameSize,
+                gameWH: gameWH,
+                cellOffset: cellOffset
+            }
+        }
+        return _gameSize;
+    }
+
     // draw the game board on the Html canvas
     function drawGameBoard() {
         // clear canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // compute the max/min coords and get an absolute size that's square
-        var gameSize = gameCells.measure();
-        var gameWH = Math.max(10, Math.max(gameSize.width, gameSize.height));
+        var gameSize = getGameSize();
+
         // draw grid
         if (showGridLines()) {
-            drawGrid(gameWH);
-        }
-
-        // center the display with this offset
-        var cellOffset = {
-            x: 0,
-            y: 0
-        };
-        if (gameSize.width != gameWH) {
-            cellOffset.x = Math.floor((gameWH - gameSize.width) / 2)
-        }
-        if (gameSize.height != gameWH) {
-            cellOffset.y = Math.floor((gameWH - gameSize.height) / 2)
+            drawGrid(gameSize.gameWH);
         }
 
         gameCells.perItem(function (cell) {
-            var rect = getCellCoordinates(cell, gameWH, gameSize, cellOffset);
+            var rect = getCellCoordinates(cell, gameSize.gameWH, gameSize.gameSize, gameSize.cellOffset);
             // default of black is fine so no need to set the fill brush
             context.fillRect(rect.x, rect.y, rect.width, rect.height);
         });
